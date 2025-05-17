@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useReducer,
@@ -38,7 +39,7 @@ function reducer(state, action) {
         ...state,
         isLoading: false,
         cities: [...state.cities, action.payload],
-        currentCity:action.payload,
+        currentCity: action.payload,
       };
     case "city/deleted":
       return {
@@ -72,7 +73,7 @@ function CitiesProvider({ children }) {
       try {
         const res = await fetch(`${BASE_URL}/cities`);
         const data = await res.json();
-        dispatch({ type: 'cities/loaded', payload: data });
+        dispatch({ type: "cities/loaded", payload: data });
       } catch {
         dispatch({
           type: "rejected",
@@ -83,20 +84,23 @@ function CitiesProvider({ children }) {
     fetchCity();
   }, []);
 
-  async function getCity(id) {
-    if (Number(id) === currentCity.id) return 
-    dispatch({ type: "loading" });
-    try {
-      const res = await fetch(`${BASE_URL}/cities/${id}`);
-      const data = await res.json();
-      dispatch({ type: "city/loaded", payload: data });
-    } catch {
-      dispatch({
-        type: "rejected",
-        error: "There was an error loding data...",
-      });
-    }
-  }
+  const getCity = useCallback(
+    async function getCity(id) {
+      if (Number(id) === currentCity.id) return;
+      dispatch({ type: "loading" });
+      try {
+        const res = await fetch(`${BASE_URL}/cities/${id}`);
+        const data = await res.json();
+        dispatch({ type: "city/loaded", payload: data });
+      } catch {
+        dispatch({
+          type: "rejected",
+          error: "There was an error loding data...",
+        });
+      }
+    },
+    [currentCity.id]
+  );
 
   async function createCity(newCity) {
     dispatch({ type: "loading" });
@@ -109,7 +113,7 @@ function CitiesProvider({ children }) {
         },
       });
       const data = await res.json();
-      dispatch({ type: "city/created" , payload: data });
+      dispatch({ type: "city/created", payload: data });
     } catch {
       dispatch({
         type: "rejected",
